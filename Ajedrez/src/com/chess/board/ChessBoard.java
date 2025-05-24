@@ -98,4 +98,54 @@ public class ChessBoard {
 		System.out.println("Move completed.");
 		return true;
 	}
+
+	public Piece getPiece(int row, int col) {
+		if (row < 0 || row >= 8 || col < 0 || col >= 8) {
+			return null; // Or throw an exception
+		}
+		return board[row][col];
+	}
+
+	public void setPiece(int row, int col, Piece piece) {
+		if (row < 0 || row >= 8 || col < 0 || col >= 8) {
+			// Handle error, maybe throw an exception
+			System.out.println("Error: Attempted to set piece out of bounds.");
+			return;
+		}
+		board[row][col] = piece;
+	}
+
+	public void removePiece(int row, int col) {
+		if (row < 0 || row >= 8 || col < 0 || col >= 8) {
+			// Handle error
+			System.out.println("Error: Attempted to remove piece out of bounds.");
+			return;
+		}
+		board[row][col] = null;
+	}
+
+	public void movePiece(int fromRow, int fromCol, int toRow, int toCol) {
+		if (fromRow < 0 || fromRow >= 8 || fromCol < 0 || fromCol >= 8 || toRow < 0 || toRow >= 8 || toCol < 0
+				|| toCol >= 8) {
+			System.out.println("Error: Move coordinates out of bounds.");
+			return;
+		}
+		Piece pieceToMove = board[fromRow][fromCol];
+		if (pieceToMove == null) {
+			System.out.println("Error: No piece at the source square for movePiece.");
+			return;
+		}
+		// Handle capture: if there's a piece at the destination, it's captured (removed)
+		if (board[toRow][toCol] != null) {
+			System.out.println("Piece captured at " + (char) ('a' + toCol) + (8 - toRow));
+		}
+		board[toRow][toCol] = pieceToMove;
+		board[fromRow][fromCol] = null;
+		System.out.println(
+				"Piece moved from " + (char) ('a' + fromCol) + (8 - fromRow) + " to " + (char) ('a' + toCol) + (8 - toRow));
+	}
+
+	public Piece[][] getBoardArray() {
+		return board;
+	}
 }

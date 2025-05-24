@@ -1,64 +1,68 @@
 package com.chess.pieces;
 
 public class Rook extends Piece {
-	public Rook(boolean isWhite) {
-		super(isWhite);
-		// Log message indicating the creation of a Rook piece with its color
-		System.out.println("Creating " + (isWhite ? "white" : "black") + " Rook");
-	}
+    private boolean hasMoved = false;
 
-	@Override
-	public boolean isValidMove(int fromRow, int fromCol, int toRow, int toCol, Piece[][] board) {
-		// Log the initial move being validated
-		System.out.println(
-				"Validating move for Rook from (" + fromRow + ", " + fromCol + ") to (" + toRow + ", " + toCol + ")");
+    public Rook(boolean isWhite) {
+        super(isWhite);
+        // System.out.println("Creating " + (isWhite ? "white" : "black") + " Rook");
+    }
 
-		// Rook moves in a straight line either horizontally or vertically
-		if (fromRow != toRow && fromCol != toCol) {
-			// If the move is neither purely horizontal nor vertical, it's invalid for a
-			// rook
-			System.out.println("Invalid move: Rook must move in a straight line");
-			return false;
-		}
+    public boolean hasMoved() {
+        return hasMoved;
+    }
 
-		// Determine the direction of movement
-		// rowDirection and colDirection will be -1, 0, or 1 to indicate the direction
-		// of movement
-		int rowDirection = Integer.compare(toRow, fromRow);
-		int colDirection = Integer.compare(toCol, fromCol);
-		System.out.println("Rook moving with direction row: " + rowDirection + ", col: " + colDirection);
+    public void setHasMoved(boolean hasMoved) {
+        this.hasMoved = hasMoved;
+    }
 
-		// Check all squares between the start and the destination
-		int currentRow = fromRow + rowDirection;
-		int currentCol = fromCol + colDirection;
-		while (currentRow != toRow || currentCol != toCol) {
-			// If there is a piece in the way, the move is blocked
-			if (board[currentRow][currentCol] != null) {
-				System.out.println("Move blocked by piece at (" + currentRow + ", " + currentCol + ")");
-				return false;
-			}
-			currentRow += rowDirection;
-			currentCol += colDirection;
-		}
+    @Override
+    public boolean isValidMove(int fromRow, int fromCol, int toRow, int toCol, Piece[][] board) {
+        // Boundary Checks for destination
+        if (toRow < 0 || toRow >= 8 || toCol < 0 || toCol >= 8) {
+            return false; // Target out of bounds
+        }
 
-		// The destination square must be either empty or contain an opponent's piece
-		if (board[toRow][toCol] == null) {
-			System.out.println("Destination square is empty");
-		} else if (board[toRow][toCol].isWhite() != isWhite) {
-			// If the destination contains an opponent's piece, the move is valid
-			System.out.println("Destination square contains an opponent's piece");
-		} else {
-			// If the destination contains a piece of the same color, the move is invalid
-			System.out.println("Invalid move: Destination square contains a piece of the same color");
-			return false;
-		}
+        // Movement Pattern: Rook moves horizontally or vertically
+        if (fromRow != toRow && fromCol != toCol) {
+            return false; // Not a straight line move
+        }
+        if (fromRow == toRow && fromCol == toCol) {
+            return false; // Cannot move to the same square
+        }
 
-		return true;
-	}
+        // Path Blocking
+        if (fromRow == toRow) { // Horizontal move
+            int step = (toCol > fromCol) ? 1 : -1;
+            for (int c = fromCol + step; c != toCol; c += step) {
+                if (board[fromRow][c] != null) {
+                    return false; // Path blocked
+                }
+            }
+        } else { // Vertical move (fromCol == toCol)
+            int step = (toRow > fromRow) ? 1 : -1;
+            for (int r = fromRow + step; r != toRow; r += step) {
+                if (board[r][fromCol] != null) {
+                    return false; // Path blocked
+                }
+            }
+        }
 
-	@Override
-	public String getSymbol() {
-		// Return the symbol for the rook, uppercase for white and lowercase for black
-		return isWhite ? "R" : "r";
-	}
+        // Capture Logic: Destination square
+        Piece destinationPiece = board[toRow][toCol];
+        if (destinationPiece == null) { // Moving to an empty square
+            return true;
+        } else { // Moving to an occupied square
+            if (destinationPiece.isWhite() != this.isWhite()) { // Capturing opponent's piece
+                return true;
+            } else { // Attempting to capture own piece
+                return false;
+            }
+        }
+    }
+
+    @Override
+    public String getSymbol() {
+        return isWhite ? "R" : "r";
+    }
 }

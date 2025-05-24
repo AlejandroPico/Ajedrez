@@ -2,108 +2,170 @@ package com.chess.gui;
 
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import javax.swing.JButton;
 import javax.swing.JPanel;
+import javax.swing.BorderFactory;
+import javax.swing.ImageIcon;
 
-import com.chess.utils.Utils;
-
-import javax.swing.*;
+import com.chess.board.ChessBoard;
+import com.chess.game.ChessGame; // Added for game logic access
+import com.chess.pieces.Piece;
+import com.chess.utils.Utils; // Added for algebraic notation
 
 public class BoardRenderer {
-	private JPanel boardPanel; // The panel that represents the chess board
-	private JButton[][] squares; // Array to hold references to each square on the board
+    private JPanel boardPanel;
+    private JButton[][] squares;
+    private ChessBoard chessBoard; // Still needed for direct piece info for rendering
+    private ChessGame chessGame;   // Added to interact with game logic (makeMove, isWhiteTurn)
+    private PieceImageLoader pieceImageLoader;
 
-	public BoardRenderer(JPanel boardPanel) {
-		System.out.println("Initializing BoardRenderer with the provided board panel");
-		this.boardPanel = boardPanel;
-		this.squares = new JButton[8][8];
-		renderBoard(); // Render the initial chess board
-	}
+    private int selectedRow = -1;
+    private int selectedCol = -1;
+    private final Color SELECTED_COLOR = Color.GREEN; // Color for selected square highlight
+    private final Color DEFAULT_WHITE_COLOR = Color.WHITE;
+    private final Color DEFAULT_GRAY_COLOR = Color.LIGHT_GRAY; // Changed for better visibility than Color.GRAY
 
-	// Method to render the chess board
-	public void renderBoard() {
-		System.out.println("Rendering the chess board");
-		boardPanel.removeAll(); // Clear the board before rendering
+    public BoardRenderer(JPanel boardPanel, ChessGame chessGame) { // Changed constructor
+        System.out.println("Initializing BoardRenderer with ChessGame reference.");
+        this.boardPanel = boardPanel;
+        this.chessGame = chessGame;
+        this.chessBoard = chessGame.getChessBoard(); // Get ChessBoard from ChessGame
+        this.squares = new JButton[8][8];
+        this.pieceImageLoader = new PieceImageLoader();
+        initializeBoardGUI();
+    }
 
-		// Loop through each square of the board and add buttons to the panel
-		for (int row = 0; row < 8; row++) {
-			for (int col = 0; col < 8; col++) {
-				JButton square = new JButton();
-				square.setPreferredSize(new Dimension(75, 75)); // Set the size of each square
+    private void initializeBoardGUI() {
+        System.out.println("Initializing Board GUI (squares, colors, and listeners)");
+        boardPanel.removeAll();
 
-				// Set the color of the square based on its position
-				if ((row + col) % 2 == 0) {
-					square.setBackground(Color.WHITE); // White for even sum of row and column
-					System.out.println("Setting square at (" + row + ", " + col + ") to WHITE");
-				} else {
-					square.setBackground(Color.GRAY); // Gray for odd sum of row and column
-					System.out.println("Setting square at (" + row + ", " + col + ") to GRAY");
-				}
+        for (int row = 0; row < 8; row++) {
+            for (int col = 0; col < 8; col++) {
+                final int r = row; // Need final vars for use in listener
+                final int c = col;
+                JButton square = new JButton();
+                square.setPreferredSize(new Dimension(75, 75));
+                setSquareDefaultColor(square, r, c); // Set default color
 
-				squares[row][col] = square; // Store reference to the square
-				boardPanel.add(square); // Add the square to the board panel
-				System.out.println("Added square at (" + row + ", " + col + ") to the board panel");
-			}
-		}
+                square.addMouseListener(new MouseAdapter() {
+                    @Override
+                    public void mouseClicked(MouseEvent e) {
+                        handleSquareClick(r, c);
+                    }
+                });
 
-		// Refresh the layout and redraw the board panel
-		System.out.println("Revalidating and repainting the board panel");
-		boardPanel.revalidate();
-		boardPanel.repaint();
-	}
+                squares[row][col] = square;
+                boardPanel.add(square);
+            }
+        }
+        boardPanel.revalidate();
+        boardPanel.repaint();
+    }
+    
+    private void setSquareDefaultColor(JButton square, int row, int col) {
+        if ((row + col) % 2 == 0) {
+            square.setBackground(DEFAULT_WHITE_COLOR);
+        } else {
+            square.setBackground(DEFAULT_GRAY_COLOR);
+        }
+    }
 
-	// Method to set a piece on a specific square
-	public void setPiece(int row, int col, ImageIcon pieceImage) {
-		System.out.println("Attempting to set piece at square (" + row + ", " + col + ")");
-		if (Utils.isWithinBounds(row, col)) { // Check if the coordinates are within bounds
-			System.out.println("Setting piece at square (" + row + ", " + col + ")");
-			if (squares[row][col] != null) {
-				squares[row][col].setIcon(pieceImage); // Set the image of the piece on the square
-				System.out.println("Piece set at square (" + row + ", " + col + ")");
-			} else {
-				System.out.println("Square at (" + row + ", " + col + ") is null, cannot set piece");
-			}
-		} else {
-			System.out.println("Attempted to set piece out of bounds at (" + row + ", " + col + ")");
-		}
-	}
+    private void handleSquareClick(int row, int col) {
+        if (chessGame.isGameOver()) {
+            System.out.println("Game is over. No clicks handled.");
+            return;
+        }
 
-	// Method to move a piece from one square to another
-	public void movePiece(int fromRow, int fromCol, int toRow, int toCol) {
-		System.out.println(
-				"Attempting to move piece from (" + fromRow + ", " + fromCol + ") to (" + toRow + ", " + toCol + ")");
-		if (Utils.isWithinBounds(fromRow, fromCol) && Utils.isWithinBounds(toRow, toCol)) { // Check if both coordinates
-																							// are within bounds
-			System.out
-					.println("Moving piece from (" + fromRow + ", " + fromCol + ") to (" + toRow + ", " + toCol + ")");
-			if (squares[fromRow][fromCol] != null) {
-				ImageIcon pieceImage = (ImageIcon) squares[fromRow][fromCol].getIcon(); // Get the piece image from the
-																						// original square
-				System.out.println("Piece found at source: " + pieceImage);
-				squares[fromRow][fromCol].setIcon(null); // Remove the piece from the original square
-				System.out.println("Removed piece from square (" + fromRow + ", " + fromCol + ")");
-				squares[toRow][toCol].setIcon(pieceImage); // Set the piece on the new square
-				System.out.println("Set piece at square (" + toRow + ", " + toCol + ")");
-			} else {
-				System.out.println("No piece at the source square, cannot move piece");
-			}
-		} else {
-			System.out.println("Attempted to move piece out of bounds");
-		}
-	}
+        Piece clickedPiece = chessBoard.getPiece(row, col);
 
-	// Method to check if a square has a piece
-	public boolean hasPiece(int row, int col) {
-		System.out.println("Checking if square (" + row + ", " + col + ") has a piece");
-		if (Utils.isWithinBounds(row, col)) { // Check if the coordinates are within bounds
-			boolean hasPiece = squares[row][col] != null && squares[row][col].getIcon() != null; // Check if the square
-																									// is not null and
-																									// contains an icon
-			System.out.println("Square (" + row + ", " + col + ") has piece: " + hasPiece);
-			return hasPiece;
-		} else {
-			System.out.println("Attempted to check piece out of bounds at (" + row + ", " + col + ")");
-			return false;
-		}
-	}
+        if (selectedRow == -1) { // No piece currently selected
+            if (clickedPiece != null && clickedPiece.isWhite() == chessGame.isWhiteTurn()) {
+                // Select this piece
+                selectedRow = row;
+                selectedCol = col;
+                System.out.println("Selected piece at (" + row + "," + col + "): " + Utils.toAlgebraicNotation(row, col));
+                highlightSelectedSquare();
+            } else {
+                System.out.println("Cannot select square (" + row + "," + col + "). Empty or not your piece.");
+            }
+        } else { // A piece is already selected, this click is for the destination
+            if (selectedRow == row && selectedCol == col) { // Clicked the same square again
+                // Deselect
+                System.out.println("Deselected piece at (" + row + "," + col + ")");
+                clearSelection();
+                renderBoard(); // Re-render to remove highlight
+            } else {
+                // Attempt to make a move
+                String fromAlg = Utils.toAlgebraicNotation(selectedRow, selectedCol);
+                String toAlg = Utils.toAlgebraicNotation(row, col);
+                String moveString = fromAlg + toAlg;
+                
+                System.out.println("Attempting move from (" + selectedRow + "," + selectedCol + ") to (" + row + "," + col + ") -> " + moveString);
+                chessGame.makeMove(moveString); // This will trigger a renderBoard via ChessGUI's update mechanism
+                
+                clearSelection(); 
+                // ChessGUI should call renderBoard() and updateStatusMessage() after makeMove
+            }
+        }
+    }
+
+    private void highlightSelectedSquare() {
+        // First, reset all square backgrounds to default (icons and borders are handled in renderBoard)
+        for (int r = 0; r < 8; r++) {
+            for (int c = 0; c < 8; c++) {
+                 setSquareDefaultColor(squares[r][c], r, c); 
+                 // squares[r][c].setBorder(BorderFactory.createEmptyBorder()); // Reset border if using border highlight
+            }
+        }
+        // Then, highlight the selected one's background
+        if (selectedRow != -1 && selectedCol != -1) {
+            squares[selectedRow][selectedCol].setBackground(SELECTED_COLOR);
+        }
+    }
+
+    private void clearSelection() {
+        selectedRow = -1;
+        selectedCol = -1;
+    }
+
+    public void renderBoard() {
+        // System.out.println("BoardRenderer rendering board...");
+        highlightSelectedSquare(); // Apply selection highlight before piece icons
+
+        for (int row = 0; row < 8; row++) {
+            for (int col = 0; col < 8; col++) {
+                Piece piece = chessBoard.getPiece(row, col);
+                if (piece != null) {
+                    String pieceKey = getPieceImageKey(piece);
+                    ImageIcon pieceImage = pieceImageLoader.getPieceImage(pieceKey);
+                    squares[row][col].setIcon(pieceImage);
+                } else {
+                    squares[row][col].setIcon(null);
+                }
+                // Ensure background color is maintained or reset if selection changes
+                // This is now handled by highlightSelectedSquare called at the beginning of renderBoard
+                if (selectedRow == row && selectedCol == col) {
+                     squares[row][col].setBackground(SELECTED_COLOR);
+                } else {
+                     setSquareDefaultColor(squares[row][col], row, col);
+                }
+            }
+        }
+        boardPanel.revalidate();
+        boardPanel.repaint();
+    }
+
+    private String getPieceImageKey(Piece piece) {
+        String color = piece.isWhite() ? "white" : "black";
+        String type = piece.getClass().getSimpleName().toLowerCase();
+        return color + "_" + type;
+    }
+
+    // This method might become redundant if ChessGame always provides the latest ChessBoard
+    public void setChessBoard(ChessBoard chessBoard) { 
+        this.chessBoard = chessBoard;
+        renderBoard();
+    }
 }
