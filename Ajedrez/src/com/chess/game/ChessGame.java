@@ -1,118 +1,293 @@
 package com.chess.game;
 
+import javax.swing.JPanel; 
+
+import com.chess.board.ChessBoard;
+import com.chess.gui.ChessGUI; // Added for callback
 import com.chess.gui.BoardRenderer;
-import com.chess.gui.PieceImageLoader;
-import com.chess.logic.GameStatus;
+import com.chess.logic.GameStatus; 
 import com.chess.moves.MoveHistory;
+import com.chess.pieces.Piece;
+import com.chess.pieces.Pawn; 
+import com.chess.pieces.Queen; 
+import com.chess.pieces.King; 
+import com.chess.pieces.Rook; 
 import com.chess.player.Player;
 import com.chess.utils.Utils;
 
 public class ChessGame {
-    private GameStatus gameStatus; // Represents the current status of the game (e.g., ongoing, checkmate, etc.)
-    private Player whitePlayer; // Player controlling the white pieces
-    private Player blackPlayer; // Player controlling the black pieces
-    private MoveHistory moveHistory; // Keeps track of all moves made during the game
-    private BoardRenderer boardRenderer; // Handles the graphical representation of the chess board
-    private PieceImageLoader pieceImageLoader; // Loads images for each chess piece
+    private GameStatus gameStatus;
+    private Player whitePlayer;
+    private Player blackPlayer;
+    private MoveHistory moveHistory;
+    private BoardRenderer boardRenderer; // Will be set by ChessGUI or constructor
+    private ChessBoard chessBoard;
+    private boolean isWhiteTurn;
+    private boolean isGameOver; 
+    private ChessGUI chessGUI; // Reference to GUI for callbacks
 
-    // Constructor to initialize the chess game with players, board renderer, and piece loader
-    public ChessGame(String whitePlayerName, String blackPlayerName, BoardRenderer boardRenderer, PieceImageLoader pieceImageLoader) {
-        System.out.println("Initializing ChessGame");
+    // Constructor updated to accept ChessGUI
+    public ChessGame(String whitePlayerName, String blackPlayerName, ChessGUI chessGUI) {
+        System.out.println("Initializing ChessGame with ChessGUI callback...");
         this.gameStatus = new GameStatus();
         this.whitePlayer = new Player(whitePlayerName, true);
         this.blackPlayer = new Player(blackPlayerName, false);
+        this.chessGUI = chessGUI; // Store GUI reference
         this.moveHistory = new MoveHistory();
+        this.chessBoard = new ChessBoard();
+        // BoardRenderer is now set via setBoardRenderer by ChessGUI after both are created
+        this.isWhiteTurn = true;
+        this.isGameOver = false; 
+        System.out.println("ChessGame initialized partially. BoardRenderer to be set.");
+        // initializeGame() will be called after BoardRenderer is set.
+    }
+
+    // Setter for BoardRenderer
+    public void setBoardRenderer(BoardRenderer boardRenderer) {
         this.boardRenderer = boardRenderer;
-        this.pieceImageLoader = pieceImageLoader;
-        System.out.println("ChessGame initialized with players: " + whitePlayerName + " (White) and " + blackPlayerName + " (Black)");
-        initializeBoard(); // Set up the initial board configuration
-    }
-
-    // Method to initialize the board with all the chess pieces in their starting positions
-    private void initializeBoard() {
-        System.out.println("Initializing chess board with pieces");
-        // Set pawns on the board
-        for (int col = 0; col < 8; col++) {
-            System.out.println("Placing black pawn at (1, " + col + ")");
-            boardRenderer.setPiece(1, col, pieceImageLoader.getPieceImage("black_pawn")); // Black pawns
-            System.out.println("Placing white pawn at (6, " + col + ")");
-            boardRenderer.setPiece(6, col, pieceImageLoader.getPieceImage("white_pawn")); // White pawns
+        System.out.println("BoardRenderer set in ChessGame.");
+        // Now that BoardRenderer is set, we can initialize the game (which renders the board)
+        initializeGame(); 
+        // Initial status update after board is rendered
+        if (this.chessGUI != null) { 
+            this.chessGUI.updateStatusMessage();
         }
-        // Set rooks
-        System.out.println("Placing black rook at (0, 0)");
-        boardRenderer.setPiece(0, 0, pieceImageLoader.getPieceImage("black_rook"));
-        System.out.println("Placing black rook at (0, 7)");
-        boardRenderer.setPiece(0, 7, pieceImageLoader.getPieceImage("black_rook"));
-        System.out.println("Placing white rook at (7, 0)");
-        boardRenderer.setPiece(7, 0, pieceImageLoader.getPieceImage("white_rook"));
-        System.out.println("Placing white rook at (7, 7)");
-        boardRenderer.setPiece(7, 7, pieceImageLoader.getPieceImage("white_rook"));
-        // Set knights
-        System.out.println("Placing black knight at (0, 1)");
-        boardRenderer.setPiece(0, 1, pieceImageLoader.getPieceImage("black_knight"));
-        System.out.println("Placing black knight at (0, 6)");
-        boardRenderer.setPiece(0, 6, pieceImageLoader.getPieceImage("black_knight"));
-        System.out.println("Placing white knight at (7, 1)");
-        boardRenderer.setPiece(7, 1, pieceImageLoader.getPieceImage("white_knight"));
-        System.out.println("Placing white knight at (7, 6)");
-        boardRenderer.setPiece(7, 6, pieceImageLoader.getPieceImage("white_knight"));
-        // Set bishops
-        System.out.println("Placing black bishop at (0, 2)");
-        boardRenderer.setPiece(0, 2, pieceImageLoader.getPieceImage("black_bishop"));
-        System.out.println("Placing black bishop at (0, 5)");
-        boardRenderer.setPiece(0, 5, pieceImageLoader.getPieceImage("black_bishop"));
-        System.out.println("Placing white bishop at (7, 2)");
-        boardRenderer.setPiece(7, 2, pieceImageLoader.getPieceImage("white_bishop"));
-        System.out.println("Placing white bishop at (7, 5)");
-        boardRenderer.setPiece(7, 5, pieceImageLoader.getPieceImage("white_bishop"));
-        // Set queens
-        System.out.println("Placing black queen at (0, 3)");
-        boardRenderer.setPiece(0, 3, pieceImageLoader.getPieceImage("black_queen"));
-        System.out.println("Placing white queen at (7, 3)");
-        boardRenderer.setPiece(7, 3, pieceImageLoader.getPieceImage("white_queen"));
-        // Set kings
-        System.out.println("Placing black king at (0, 4)");
-        boardRenderer.setPiece(0, 4, pieceImageLoader.getPieceImage("black_king"));
-        System.out.println("Placing white king at (7, 4)");
-        boardRenderer.setPiece(7, 4, pieceImageLoader.getPieceImage("white_king"));
     }
 
-    // Method to make a move on the chessboard
-    public void makeMove(String move) {
-        System.out.println("Making move: " + move);
-        // Convert the move to coordinates and validate
-        if (move.length() == 4) { // Ensure the move is in the correct format, e.g., "e2e4"
-            int[] from = Utils.fromAlgebraicNotation(move.substring(0, 2)); // Parse the source coordinates
-            int[] to = Utils.fromAlgebraicNotation(move.substring(2, 4)); // Parse the destination coordinates
-            System.out.println("Parsed move from: (" + from[0] + ", " + from[1] + ") to: (" + to[0] + ", " + to[1] + ")");
-            if (Utils.isWithinBounds(from[0], from[1]) && Utils.isWithinBounds(to[0], to[1])) { // Check if the coordinates are within bounds
-                // Check if there is a piece at the source position
-                if (boardRenderer.hasPiece(from[0], from[1])) { // Updated to use hasPiece method
-                    System.out.println("Piece found at source position: " + move.substring(0, 2));
-                    // Update the board renderer to move the piece
-                    boardRenderer.movePiece(from[0], from[1], to[0], to[1]);
-                    // Add the move to the history if valid
-                    moveHistory.addMove(move);
-                    System.out.println("Move made: " + move);
-                } else {
-                    System.out.println("No piece at the source position: " + move.substring(0, 2));
-                }
-            } else {
-                System.out.println("Move is out of bounds: " + move);
-            }
+
+    private void initializeGame() {
+        System.out.println("Initializing chess board state via ChessBoard.initialize()...");
+        chessBoard.initialize(); 
+        System.out.println("Chess board state initialized.");
+        if (boardRenderer != null) {
+            System.out.println("Requesting BoardRenderer to render the board...");
+            boardRenderer.renderBoard();
+            System.out.println("Initial board rendered.");
         } else {
-            System.out.println("Invalid move format: " + move);
+            System.out.println("BoardRenderer not set yet in initializeGame.");
+        }
+    }
+    
+    // Method to be called by BoardRenderer or after a move is processed
+    private void updateGUIAfterMove() {
+        if (boardRenderer != null) {
+            boardRenderer.renderBoard();
+        }
+        if (chessGUI != null) {
+            chessGUI.updateStatusMessage();
         }
     }
 
-    // Method to print the current status of the game
-    public void printGameStatus() {
-        System.out.println("Current game status: " + gameStatus.getCurrentStatus());
+    private int[] findKingPosition(boolean isWhiteKing) {
+        for (int r = 0; r < 8; r++) {
+            for (int c = 0; c < 8; c++) {
+                Piece p = chessBoard.getPiece(r, c);
+                if (p instanceof King && p.isWhite() == isWhiteKing) {
+                    return new int[]{r, c};
+                }
+            }
+        }
+        return null; 
     }
 
-    // Method to print the history of moves made in the game
+    private boolean isKingInCheck(boolean kingIsWhite) {
+        int[] kingPos = findKingPosition(kingIsWhite);
+        if (kingPos == null) return false; 
+        try {
+            return chessBoard.isSquareAttacked(kingPos[0], kingPos[1], !kingIsWhite);
+        } catch (NoSuchMethodError e) {
+            System.out.println("CRITICAL ERROR: chessBoard.isSquareAttacked method is missing. Check detection will not work.");
+            return false; 
+        } catch (Exception e) {
+            System.out.println("Exception during isSquareAttacked call: " + e.getMessage());
+            return false;
+        }
+    }
+
+    private boolean hasAnyLegalMoves(boolean forPlayerIsWhite) {
+        try {
+            if (chessBoard.getBoardArray() == null) { 
+                System.out.println("Error in hasAnyLegalMoves: Board array is null.");
+                return false; 
+            }
+        } catch (NoSuchMethodError e) {
+             System.out.println("CRITICAL ERROR: chessBoard.getBoardArray method is missing. Cannot check for legal moves.");
+             return false; 
+        }
+
+        for (int r = 0; r < 8; r++) {
+            for (int c = 0; c < 8; c++) {
+                Piece piece = chessBoard.getPiece(r, c);
+                if (piece != null && piece.isWhite() == forPlayerIsWhite) {
+                    for (int tr = 0; tr < 8; tr++) { 
+                        for (int tc = 0; tc < 8; tc++) { 
+                            if (piece.isValidMove(r, c, tr, tc, chessBoard.getBoardArray())) {
+                                Piece originalDestinationPiece = chessBoard.getPiece(tr, tc);
+                                chessBoard.setPiece(tr, tc, piece);
+                                chessBoard.setPiece(r, c, null);
+                                boolean resultsInCheck = isKingInCheck(forPlayerIsWhite);
+                                chessBoard.setPiece(r, c, piece);
+                                chessBoard.setPiece(tr, tc, originalDestinationPiece);
+                                if (!resultsInCheck) {
+                                    return true; 
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return false; 
+    }
+    
+    private void updateGameStatusAndCheckEndConditions() {
+        // It's now the next player's turn, so isWhiteTurn reflects the player TO MOVE.
+        boolean kingCurrentlyInCheck = isKingInCheck(isWhiteTurn);
+        boolean currentPlayerHasLegalMoves = hasAnyLegalMoves(isWhiteTurn);
+
+        if (!currentPlayerHasLegalMoves) {
+            if (kingCurrentlyInCheck) {
+                gameStatus.setCurrentStatus(GameStatus.Status.CHECKMATE);
+                System.out.println("CHECKMATE! " + (isWhiteTurn ? "Black" : "White") + " wins."); // Winner is opposite of current turn
+                isGameOver = true;
+            } else {
+                gameStatus.setCurrentStatus(GameStatus.Status.STALEMATE);
+                System.out.println("STALEMATE! The game is a draw.");
+                isGameOver = true;
+            }
+        } else if (kingCurrentlyInCheck) {
+            System.out.println((isWhiteTurn ? "White" : "Black") + " is in CHECK!");
+        }
+    }
+
+
+    public void makeMove(String move) {
+        if (isGameOver) {
+            System.out.println("Game is over. No more moves allowed. Status: " + gameStatus.getCurrentStatus());
+            updateGUIAfterMove(); // Ensure UI reflects final status
+            return;
+        }
+
+        System.out.println("Attempting to make move: " + move + " (" + (isWhiteTurn ? "White" : "Black") + "'s turn)");
+        
+        if (move == null || move.length() != 4) {
+            System.out.println("Invalid move format. Please use 'e2e4'.");
+            updateGUIAfterMove(); 
+            return;
+        }
+        String fromAlg = move.substring(0, 2);
+        String toAlg = move.substring(2, 4);
+        int[] fromCoords;
+        int[] toCoords;
+        try {
+            fromCoords = Utils.fromAlgebraicNotation(fromAlg);
+            toCoords = Utils.fromAlgebraicNotation(toAlg);
+        } catch (IllegalArgumentException e) {
+            System.out.println("Invalid algebraic notation in move: " + move + ". Error: " + e.getMessage());
+            updateGUIAfterMove();
+            return;
+        }
+        int fromRow = fromCoords[0];
+        int fromCol = fromCoords[1];
+        int toRow = toCoords[0];
+        int toCol = toCoords[1];
+        if (!Utils.isWithinBounds(fromRow, fromCol) || !Utils.isWithinBounds(toRow, toCol)) {
+            System.out.println("Move coordinates are out of bounds.");
+            updateGUIAfterMove();
+            return;
+        }
+        Piece pieceToMove = chessBoard.getPiece(fromRow, fromCol);
+        if (pieceToMove == null) {
+            System.out.println("No piece at source square: " + fromAlg);
+            updateGUIAfterMove();
+            return;
+        }
+        if ((pieceToMove.isWhite() && !isWhiteTurn) || (!pieceToMove.isWhite() && isWhiteTurn)) {
+            System.out.println("Error: It's not " + (pieceToMove.isWhite() ? "Black's" : "White's") + " turn.");
+            updateGUIAfterMove();
+            return;
+        }
+
+        boolean isPawnTwoSquareAdvance = (pieceToMove instanceof Pawn && Math.abs(toRow - fromRow) == 2);
+        if (!isPawnTwoSquareAdvance) { 
+             try { chessBoard.setEnPassantTargetSquare(null); } catch (Error e) { /* Method missing */ }
+        }
+
+        if (pieceToMove.isValidMove(fromRow, fromCol, toRow, toCol, chessBoard.getBoardArray())) {
+            Piece originalDestinationPiece = chessBoard.getPiece(toRow, toCol); 
+            chessBoard.setPiece(toRow, toCol, pieceToMove); 
+            chessBoard.setPiece(fromRow, fromCol, null);
+            boolean selfCheck = isKingInCheck(isWhiteTurn); 
+            chessBoard.setPiece(fromRow, fromCol, pieceToMove);
+            chessBoard.setPiece(toRow, toCol, originalDestinationPiece);
+            if (selfCheck) {
+                System.out.println("Invalid move: " + move + " leaves your King in check.");
+                updateGUIAfterMove(); 
+                return;
+            }
+            Piece capturedPieceActual = chessBoard.getPiece(toRow, toCol); 
+            chessBoard.movePiece(fromRow, fromCol, toRow, toCol); 
+            if (capturedPieceActual != null && capturedPieceActual.isWhite() != pieceToMove.isWhite()) {
+                 System.out.println("Captured " + capturedPieceActual.getClass().getSimpleName() + " at " + toAlg);
+            }
+            moveHistory.addMove(move);
+            if (pieceToMove instanceof King ) { 
+                try { /* ((King)pieceToMove).setHasMoved(true); */ } catch (Error e) { /* Method missing */ }
+            } else if (pieceToMove instanceof Rook ) {
+                try { ((Rook)chessBoard.getPiece(toRow, toCol)).setHasMoved(true); } catch (Error e) { /* Method missing */ }
+            }
+            if (isPawnTwoSquareAdvance) { 
+                try {
+                    // int enPassantRow = fromRow + ((Pawn) pieceToMove).getDirection(); 
+                    // chessBoard.setEnPassantTargetSquare(new int[]{enPassantRow, toCol});
+                } catch (Error e) { /* Method missing */ }
+            } 
+            Piece movedPiece = chessBoard.getPiece(toRow, toCol); 
+            if (movedPiece instanceof Pawn) { 
+                boolean whitePromotes = movedPiece.isWhite() && toRow == 0;
+                boolean blackPromotes = !movedPiece.isWhite() && toRow == 7;
+                if (whitePromotes || blackPromotes) {
+                    chessBoard.setPiece(toRow, toCol, new Queen(movedPiece.isWhite()));
+                    System.out.println("Pawn promoted to Queen at " + toAlg + "!");
+                }
+            }
+            
+            isWhiteTurn = !isWhiteTurn; 
+            System.out.println("Move successful. It is now " + (isWhiteTurn ? "White's" : "Black's") + " turn.");
+            updateGameStatusAndCheckEndConditions(); // Check for check/checkmate/stalemate AFTER turn switch
+        } else {
+            System.out.println("Invalid move for " + pieceToMove.getClass().getSimpleName() + " from " + fromAlg + " to " + toAlg + " according to its isValidMove method.");
+        }
+        updateGUIAfterMove(); // Central place to update UI after any move attempt outcome
+    }
+
+    public void printGameStatus() {
+        System.out.println("Current game status: " + gameStatus.getCurrentStatus() + ". Turn: " + (isWhiteTurn ? "White" : "Black"));
+        chessBoard.printBoard(); 
+    }
+
     public void printMoveHistory() {
-        System.out.println("Printing move history");
+        System.out.println("Printing move history:");
         moveHistory.printHistory();
+    }
+
+    public BoardRenderer getBoardRenderer() { 
+        return boardRenderer;
+    }
+
+    public ChessBoard getChessBoard() {
+        return chessBoard;
+    }
+
+    public boolean isWhiteTurn() {
+        return isWhiteTurn;
+    }
+    
+    public boolean isGameOver() {
+        return isGameOver;
+    }
+
+    public GameStatus getGameStatus() {
+        return this.gameStatus;
     }
 }
