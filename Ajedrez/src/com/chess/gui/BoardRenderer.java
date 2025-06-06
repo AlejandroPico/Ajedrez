@@ -8,6 +8,7 @@ import javax.swing.JButton;
 import javax.swing.JPanel;
 import javax.swing.BorderFactory;
 import javax.swing.ImageIcon;
+import javax.swing.border.Border;
 
 import com.chess.board.ChessBoard;
 import com.chess.game.ChessGame; // Added for game logic access
@@ -23,9 +24,12 @@ public class BoardRenderer {
 
     private int selectedRow = -1;
     private int selectedCol = -1;
-    private final Color SELECTED_COLOR = Color.GREEN; // Color for selected square highlight
+    private final Color SELECTED_COLOR = Color.YELLOW;
+    private final Color MOVE_COLOR = new Color(0, 150, 0);
+    private final Color CAPTURE_COLOR = new Color(170, 0, 0);
     private final Color DEFAULT_WHITE_COLOR = Color.WHITE;
-    private final Color DEFAULT_GRAY_COLOR = Color.LIGHT_GRAY; // Changed for better visibility than Color.GRAY
+    private final Color DEFAULT_BLACK_COLOR = Color.BLACK;
+    private final Border DEFAULT_BORDER = BorderFactory.createLineBorder(Color.GRAY);
 
     public BoardRenderer(JPanel boardPanel, ChessGame chessGame) { // Changed constructor
         System.out.println("Initializing BoardRenderer with ChessGame reference.");
@@ -47,6 +51,9 @@ public class BoardRenderer {
                 final int c = col;
                 JButton square = new JButton();
                 square.setPreferredSize(new Dimension(75, 75));
+                square.setFocusPainted(false);
+                square.setOpaque(true);
+                square.setBorder(DEFAULT_BORDER);
                 setSquareDefaultColor(square, r, c); // Set default color
 
                 square.addMouseListener(new MouseAdapter() {
@@ -68,8 +75,10 @@ public class BoardRenderer {
         if ((row + col) % 2 == 0) {
             square.setBackground(DEFAULT_WHITE_COLOR);
         } else {
-            square.setBackground(DEFAULT_GRAY_COLOR);
+            square.setBackground(DEFAULT_BLACK_COLOR);
         }
+        square.setForeground(Color.BLACK);
+        square.setBorder(DEFAULT_BORDER);
     }
 
     private void handleSquareClick(int row, int col) {
@@ -82,44 +91,28 @@ public class BoardRenderer {
 
         if (selectedRow == -1) { // No piece currently selected
             if (clickedPiece != null && clickedPiece.isWhite() == chessGame.isWhiteTurn()) {
-                // Select this piece
                 selectedRow = row;
                 selectedCol = col;
-                System.out.println("Selected piece at (" + row + "," + col + "): " + Utils.toAlgebraicNotation(row, col));
-                highlightSelectedSquare();
-            } else {
-                System.out.println("Cannot select square (" + row + "," + col + "). Empty or not your piece.");
+                renderBoard();
             }
         } else { // A piece is already selected, this click is for the destination
             if (selectedRow == row && selectedCol == col) { // Clicked the same square again
                 // Deselect
-                System.out.println("Deselected piece at (" + row + "," + col + ")");
                 clearSelection();
-                renderBoard(); // Re-render to remove highlight
+                renderBoard();
             } else {
                 // Attempt to make a move
                 String fromAlg = Utils.toAlgebraicNotation(selectedRow, selectedCol);
                 String toAlg = Utils.toAlgebraicNotation(row, col);
                 String moveString = fromAlg + toAlg;
                 
-                System.out.println("Attempting move from (" + selectedRow + "," + selectedCol + ") to (" + row + "," + col + ") -> " + moveString);
-                chessGame.makeMove(moveString); // This will trigger a renderBoard via ChessGUI's update mechanism
-                
-                clearSelection(); 
-                // ChessGUI should call renderBoard() and updateStatusMessage() after makeMove
+                chessGame.makeMove(moveString); // ChessGame will update GUI
+                clearSelection();
             }
         }
     }
 
     private void highlightSelectedSquare() {
-        // First, reset all square backgrounds to default (icons and borders are handled in renderBoard)
-        for (int r = 0; r < 8; r++) {
-            for (int c = 0; c < 8; c++) {
-                 setSquareDefaultColor(squares[r][c], r, c); 
-                 // squares[r][c].setBorder(BorderFactory.createEmptyBorder()); // Reset border if using border highlight
-            }
-        }
-        // Then, highlight the selected one's background
         if (selectedRow != -1 && selectedCol != -1) {
             squares[selectedRow][selectedCol].setBackground(SELECTED_COLOR);
         }
@@ -131,30 +124,46 @@ public class BoardRenderer {
     }
 
     public void renderBoard() {
-        // System.out.println("BoardRenderer rendering board...");
-        highlightSelectedSquare(); // Apply selection highlight before piece icons
-
         for (int row = 0; row < 8; row++) {
             for (int col = 0; col < 8; col++) {
                 Piece piece = chessBoard.getPiece(row, col);
+                setSquareDefaultColor(squares[row][col], row, col);
                 if (piece != null) {
-                    String pieceKey = getPieceImageKey(piece);
-                    ImageIcon pieceImage = pieceImageLoader.getPieceImage(pieceKey);
-                    squares[row][col].setIcon(pieceImage);
+                    String key = getPieceImageKey(piece);
+                    squares[row][col].setIcon(pieceImageLoader.getPieceImage(key));
                 } else {
                     squares[row][col].setIcon(null);
                 }
-                // Ensure background color is maintained or reset if selection changes
-                // This is now handled by highlightSelectedSquare called at the beginning of renderBoard
-                if (selectedRow == row && selectedCol == col) {
-                     squares[row][col].setBackground(SELECTED_COLOR);
-                } else {
-                     setSquareDefaultColor(squares[row][col], row, col);
+            }
+        }
+
+        highlightSelectedSquare();
+        highlightPossibleMoves();
+
+        boardPanel.revalidate();
+        boardPanel.repaint();
+    }
+
+    private void highlightPossibleMoves() {
+        if (selectedRow == -1 || selectedCol == -1) {
+            return;
+        }
+        Piece piece = chessBoard.getPiece(selectedRow, selectedCol);
+        if (piece == null) return;
+
+        for (int r = 0; r < 8; r++) {
+            for (int c = 0; c < 8; c++) {
+                if (piece.isValidMove(selectedRow, selectedCol, r, c, chessBoard.getBoardArray())) {
+                    Piece target = chessBoard.getPiece(r, c);
+                    if (target == null) {
+                        squares[r][c].setBackground(MOVE_COLOR);
+                    } else if (target.isWhite() != piece.isWhite()) {
+                        squares[r][c].setBackground(CAPTURE_COLOR);
+                        squares[r][c].setForeground(Color.RED);
+                    }
                 }
             }
         }
-        boardPanel.revalidate();
-        boardPanel.repaint();
     }
 
     private String getPieceImageKey(Piece piece) {

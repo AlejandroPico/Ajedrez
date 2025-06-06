@@ -8,6 +8,7 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingConstants;
+import javax.swing.JOptionPane;
 
 import com.chess.game.ChessGame; 
 import com.chess.logic.GameStatus; 
@@ -34,11 +35,16 @@ public class ChessGUI {
         statusLabel.setFont(new Font("Serif", Font.BOLD, 20));
         frame.add(statusLabel, BorderLayout.SOUTH);
         
-        // 1. Create ChessGame instance, passing 'this' (ChessGUI) for callbacks
-        this.chessGame = new ChessGame("Player White", "Player Black", this);
-        
-        // 2. Create BoardRenderer instance, passing boardPanel and the chessGame instance
-        // The BoardRenderer constructor used here is (JPanel, ChessGame) from previous successful write.
+        boolean playWhite = showSideSelectionDialog();
+        String playerName = "Jugador";
+        String opponentName = "Oponente";
+        if (playWhite) {
+            this.chessGame = new ChessGame(playerName, opponentName, this);
+        } else {
+            this.chessGame = new ChessGame(opponentName, playerName, this);
+        }
+
+        // Create BoardRenderer instance and connect it with the game
         this.boardRenderer = new BoardRenderer(boardPanel, this.chessGame);
         
         // 3. Set the BoardRenderer instance on ChessGame
@@ -86,5 +92,18 @@ public class ChessGUI {
         
         statusLabel.setText(finalMessage);
         System.out.println("GUI Status Updated: " + finalMessage);
+    }
+
+    private boolean showSideSelectionDialog() {
+        Object[] options = { "Blancas", "Negras" };
+        int choice = JOptionPane.showOptionDialog(null,
+                "Elige con qué bando jugar",
+                "Bienvenido",
+                JOptionPane.DEFAULT_OPTION,
+                JOptionPane.QUESTION_MESSAGE,
+                null,
+                options,
+                options[0]);
+        return choice != 1; // 0 -> white, 1 -> black
     }
 }
