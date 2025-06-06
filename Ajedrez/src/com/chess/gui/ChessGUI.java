@@ -102,4 +102,17 @@ public class ChessGUI {
                 options[0]);
         return choice != 1; // 0 -> white, 1 -> black
     }
+
+    private boolean showSideSelectionDialog() {
+        Object[] options = { "Blancas", "Negras" };
+        int choice = JOptionPane.showOptionDialog(null,
+                "Elige con qué bando jugar",
+                "Bienvenido",
+                JOptionPane.DEFAULT_OPTION,
+                JOptionPane.QUESTION_MESSAGE,
+                null,
+                options,
+                options[0]);
+        return choice != 1; // 0 -> white, 1 -> black
+    }
 }
