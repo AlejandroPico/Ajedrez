@@ -5,7 +5,6 @@ public class Rook extends Piece {
 
     public Rook(boolean isWhite) {
         super(isWhite);
-        // System.out.println("Creating " + (isWhite ? "white" : "black") + " Rook");
     }
 
     public boolean hasMoved() {

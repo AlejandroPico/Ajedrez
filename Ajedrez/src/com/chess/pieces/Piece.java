@@ -5,7 +5,6 @@ public abstract class Piece {
 
 	public Piece(boolean isWhite) {
 		this.isWhite = isWhite;
-		System.out.println("Creating " + (isWhite ? "white" : "black") + " piece: " + this.getClass().getSimpleName());
 	}
 
 	public boolean isWhite() {

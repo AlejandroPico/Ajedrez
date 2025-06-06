@@ -10,19 +10,16 @@ public class GameStatus {
 
 	// Constructor to initialize the game status to ONGOING
 	public GameStatus() {
-		currentStatus = Status.ONGOING;
-		System.out.println("Game status initialized to ONGOING.");
+                currentStatus = Status.ONGOING;
 	}
 
 	// Method to get the current game status
 	public Status getCurrentStatus() {
-		System.out.println("Getting current game status: " + currentStatus);
-		return currentStatus;
+                return currentStatus;
 	}
 
 	// Method to set the current game status
 	public void setCurrentStatus(Status status) {
-		System.out.println("Setting current game status to: " + status);
-		this.currentStatus = status;
-	}
+                this.currentStatus = status;
+        }
 }

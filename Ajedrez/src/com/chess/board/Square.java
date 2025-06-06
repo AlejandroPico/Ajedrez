@@ -10,22 +10,20 @@ public class Square {
 	public Square(int row, int col) {
 		this.row = row;
 		this.col = col;
-		this.piece = null;
-		System.out.println("Square created at position (" + row + ", " + col + ")");
-	}
+                this.piece = null;
+        }
 
 	public Piece getPiece() {
 		return piece;
 	}
 
 	public void setPiece(Piece piece) {
-		if (piece == null) {
-			System.out.println("Removing piece from square at position (" + row + ", " + col + ")");
-		} else {
-			System.out.println("Placing " + (piece.isWhite() ? "white" : "black") + " "
-					+ piece.getClass().getSimpleName() + " at position (" + row + ", " + col + ")");
-		}
-		this.piece = piece;
+                if (piece == null) {
+                        // remove piece
+                } else {
+                        // place piece
+                }
+                this.piece = piece;
 	}
 
 	@Override
