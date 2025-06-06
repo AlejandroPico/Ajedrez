@@ -4,8 +4,7 @@ public class Player {
 	private String name; // The name of the player
 	private boolean isWhite; // Boolean indicating whether the player is playing white pieces
 
-	// Constructor to initialize the player with a name and their color (white or
-	// black)
+       // Constructor to initialize the player with a name and their color (white or black)
 	public Player(String name, boolean isWhite) {
 		if (name == null || name.isEmpty()) {
 			throw new IllegalArgumentException("Player name cannot be null or empty.");
