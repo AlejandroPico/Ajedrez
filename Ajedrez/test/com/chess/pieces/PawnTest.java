@@ -191,7 +191,7 @@ public class PawnTest {
     void testPawn_InvalidJumpMove() {
         Pawn whitePawn = new Pawn(true);
         boardArray[6][4] = whitePawn; // White pawn at e2
-        // Attempt to jump two squares forward without it being initial move (or to occupied path)
-        assertFalse(whitePawn.isValidMove(6, 4, 4, 4, boardArray), "Pawn cannot jump two squares (initial two-square move is not part of this test set's assumed logic)");
+        // Attempt the initial two-square advance which should be allowed
+        assertTrue(whitePawn.isValidMove(6, 4, 4, 4, boardArray), "Initial two-square advance should be valid");
     }
 }
