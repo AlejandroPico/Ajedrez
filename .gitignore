@@ -1,0 +1,6 @@
+# Ignore compiled binaries and build outputs
+bin/
+*.class
+build/
+target/
+out/
