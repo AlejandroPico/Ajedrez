@@ -20,7 +20,7 @@ public class ChessGame {
     private Player whitePlayer;
     private Player blackPlayer;
     private MoveHistory moveHistory;
-    private BoardRenderer boardRenderer; // Will be set by ChessGUI or constructor
+    private BoardRenderer boardRenderer; // Set via setBoardRenderer by ChessGUI after construction
     private ChessBoard chessBoard;
     private boolean isWhiteTurn;
     private boolean isGameOver; 
