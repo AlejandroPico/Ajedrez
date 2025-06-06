@@ -92,27 +92,16 @@ public class ChessGame {
 
     private boolean isKingInCheck(boolean kingIsWhite) {
         int[] kingPos = findKingPosition(kingIsWhite);
-        if (kingPos == null) return false; 
-        try {
-            return chessBoard.isSquareAttacked(kingPos[0], kingPos[1], !kingIsWhite);
-        } catch (NoSuchMethodError e) {
-            System.out.println("CRITICAL ERROR: chessBoard.isSquareAttacked method is missing. Check detection will not work.");
-            return false; 
-        } catch (Exception e) {
-            System.out.println("Exception during isSquareAttacked call: " + e.getMessage());
+        if (kingPos == null) {
             return false;
         }
+        return chessBoard.isSquareAttacked(kingPos[0], kingPos[1], !kingIsWhite);
     }
 
     private boolean hasAnyLegalMoves(boolean forPlayerIsWhite) {
-        try {
-            if (chessBoard.getBoardArray() == null) { 
-                System.out.println("Error in hasAnyLegalMoves: Board array is null.");
-                return false; 
-            }
-        } catch (NoSuchMethodError e) {
-             System.out.println("CRITICAL ERROR: chessBoard.getBoardArray method is missing. Cannot check for legal moves.");
-             return false; 
+        if (chessBoard.getBoardArray() == null) {
+            System.out.println("Error in hasAnyLegalMoves: Board array is null.");
+            return false;
         }
 
         for (int r = 0; r < 8; r++) {
@@ -209,8 +198,8 @@ public class ChessGame {
         }
 
         boolean isPawnTwoSquareAdvance = (pieceToMove instanceof Pawn && Math.abs(toRow - fromRow) == 2);
-        if (!isPawnTwoSquareAdvance) { 
-             try { chessBoard.setEnPassantTargetSquare(null); } catch (Error e) { /* Method missing */ }
+        if (!isPawnTwoSquareAdvance) {
+            chessBoard.setEnPassantTargetSquare(null);
         }
 
         if (pieceToMove.isValidMove(fromRow, fromCol, toRow, toCol, chessBoard.getBoardArray())) {
@@ -236,12 +225,10 @@ public class ChessGame {
             } else if (pieceToMove instanceof Rook ) {
                 try { ((Rook)chessBoard.getPiece(toRow, toCol)).setHasMoved(true); } catch (Error e) { /* Method missing */ }
             }
-            if (isPawnTwoSquareAdvance) { 
-                try {
-                    // int enPassantRow = fromRow + ((Pawn) pieceToMove).getDirection(); 
-                    // chessBoard.setEnPassantTargetSquare(new int[]{enPassantRow, toCol});
-                } catch (Error e) { /* Method missing */ }
-            } 
+            if (isPawnTwoSquareAdvance) {
+                int enPassantRow = fromRow + ((Pawn) pieceToMove).getDirection();
+                chessBoard.setEnPassantTargetSquare(new int[] { enPassantRow, toCol });
+            }
             Piece movedPiece = chessBoard.getPiece(toRow, toCol); 
             if (movedPiece instanceof Pawn) { 
                 boolean whitePromotes = movedPiece.isWhite() && toRow == 0;

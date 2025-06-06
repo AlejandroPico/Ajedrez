@@ -1,11 +1,19 @@
 package com.chess.pieces;
 
 public class Pawn extends Piece {
-	public Pawn(boolean isWhite) {
-		super(isWhite);
-		// Log message indicating the creation of a Pawn piece with its color
-		System.out.println("Creating " + (isWhite ? "white" : "black") + " Pawn");
-	}
+    public Pawn(boolean isWhite) {
+        super(isWhite);
+        // Log message indicating the creation of a Pawn piece with its color
+        System.out.println("Creating " + (isWhite ? "white" : "black") + " Pawn");
+    }
+
+    /**
+     * Returns the movement direction for this pawn.
+     * @return -1 for white pawns moving up, +1 for black pawns moving down.
+     */
+    public int getDirection() {
+        return isWhite ? -1 : 1;
+    }
 
         @Override
         public boolean isValidMove(int fromRow, int fromCol, int toRow, int toCol, Piece[][] board) {

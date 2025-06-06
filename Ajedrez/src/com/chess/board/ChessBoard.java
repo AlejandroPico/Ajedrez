@@ -7,9 +7,15 @@ import com.chess.pieces.Pawn;
 import com.chess.pieces.Piece;
 import com.chess.pieces.Queen;
 import com.chess.pieces.Rook;
+import com.chess.utils.Utils;
 
 public class ChessBoard {
-	private Piece[][] board;
+        private Piece[][] board;
+        /**
+         * Square that can be captured via en passant. Represented as
+         * {row, col} or {@code null} if no en passant capture is available.
+         */
+        private int[] enPassantTargetSquare;
 
 	public void initialize() {
 		System.out.println("Initializing the chess board...");
@@ -145,7 +151,96 @@ public class ChessBoard {
 				"Piece moved from " + (char) ('a' + fromCol) + (8 - fromRow) + " to " + (char) ('a' + toCol) + (8 - toRow));
 	}
 
-	public Piece[][] getBoardArray() {
-		return board;
-	}
+        public Piece[][] getBoardArray() {
+                return board;
+        }
+
+        /**
+         * Returns the currently available en passant target square or {@code null}.
+         */
+        public int[] getEnPassantTargetSquare() {
+                return enPassantTargetSquare;
+        }
+
+        /**
+         * Sets the en passant target square.
+         *
+         * @param square coordinates {row, col} or {@code null} if none
+         */
+        public void setEnPassantTargetSquare(int[] square) {
+                this.enPassantTargetSquare = square;
+        }
+
+        /**
+         * Determines if a given square is attacked by any piece of the specified
+         * color.
+         */
+        public boolean isSquareAttacked(int row, int col, boolean byWhite) {
+                if (row < 0 || row >= 8 || col < 0 || col >= 8)
+                        return false;
+
+                // Directions for sliding pieces
+                int[][] rookDirs = { { 1, 0 }, { -1, 0 }, { 0, 1 }, { 0, -1 } };
+                int[][] bishopDirs = { { 1, 1 }, { 1, -1 }, { -1, 1 }, { -1, -1 } };
+
+                // Check each square for attacking piece of the given color
+                for (int r = 0; r < 8; r++) {
+                        for (int c = 0; c < 8; c++) {
+                                Piece p = board[r][c];
+                                if (p == null || p.isWhite() != byWhite)
+                                        continue;
+
+                                if (p instanceof Pawn) {
+                                        int dir = byWhite ? -1 : 1;
+                                        if (r + dir == row && Math.abs(c - col) == 1)
+                                                return true;
+                                } else if (p instanceof Knight) {
+                                        int[][] knightMoves = { { 2, 1 }, { 1, 2 }, { -1, 2 }, { -2, 1 }, { -2, -1 },
+                                                        { -1, -2 }, { 1, -2 }, { 2, -1 } };
+                                        for (int[] m : knightMoves) {
+                                                if (r + m[0] == row && c + m[1] == col)
+                                                        return true;
+                                        }
+                                } else if (p instanceof Bishop || p instanceof Queen) {
+                                        for (int[] d : bishopDirs) {
+                                                int rr = r + d[0];
+                                                int cc = c + d[1];
+                                                while (Utils.isWithinBounds(rr, cc)) {
+                                                        if (rr == row && cc == col)
+                                                                return true;
+                                                        if (board[rr][cc] != null)
+                                                                break;
+                                                        rr += d[0];
+                                                        cc += d[1];
+                                                }
+                                        }
+                                        if (!(p instanceof Queen))
+                                                continue;
+                                }
+
+                                if (p instanceof Rook || p instanceof Queen) {
+                                        for (int[] d : rookDirs) {
+                                                int rr = r + d[0];
+                                                int cc = c + d[1];
+                                                while (Utils.isWithinBounds(rr, cc)) {
+                                                        if (rr == row && cc == col)
+                                                                return true;
+                                                        if (board[rr][cc] != null)
+                                                                break;
+                                                        rr += d[0];
+                                                        cc += d[1];
+                                                }
+                                        }
+                                        if (!(p instanceof Queen))
+                                                continue;
+                                }
+
+                                if (p instanceof King) {
+                                        if (Math.abs(r - row) <= 1 && Math.abs(c - col) <= 1)
+                                                return true;
+                                }
+                        }
+                }
+                return false;
+        }
 }
