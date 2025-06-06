@@ -7,12 +7,18 @@ public class Pawn extends Piece {
 		System.out.println("Creating " + (isWhite ? "white" : "black") + " Pawn");
 	}
 
-	@Override
-	public boolean isValidMove(int fromRow, int fromCol, int toRow, int toCol, Piece[][] board) {
-		// Log the initial move being validated
-		System.out.println(
-				"Validating move for Pawn from (" + fromRow + ", " + fromCol + ") to (" + toRow + ", " + toCol + ")");
-		int direction = isWhite ? -1 : 1;
+        @Override
+        public boolean isValidMove(int fromRow, int fromCol, int toRow, int toCol, Piece[][] board) {
+                // Log the initial move being validated
+                System.out.println(
+                                "Validating move for Pawn from (" + fromRow + ", " + fromCol + ") to (" + toRow + ", " + toCol + ")");
+
+                // Ensure coordinates are within the board boundaries before accessing the board
+                if (fromRow < 0 || fromRow >= 8 || fromCol < 0 || fromCol >= 8 ||
+                    toRow < 0 || toRow >= 8 || toCol < 0 || toCol >= 8) {
+                        return false;
+                }
+                int direction = isWhite ? -1 : 1;
 
 		// Normal move forward
 		if (fromCol == toCol) {
