@@ -28,7 +28,6 @@ public class ChessGame {
 
     // Constructor updated to accept ChessGUI
     public ChessGame(String whitePlayerName, String blackPlayerName, ChessGUI chessGUI) {
-        System.out.println("Initializing ChessGame with ChessGUI callback...");
         this.gameStatus = new GameStatus();
         this.whitePlayer = new Player(whitePlayerName, true);
         this.blackPlayer = new Player(blackPlayerName, false);
@@ -38,14 +37,12 @@ public class ChessGame {
         // BoardRenderer is now set via setBoardRenderer by ChessGUI after both are created
         this.isWhiteTurn = true;
         this.isGameOver = false; 
-        System.out.println("ChessGame initialized partially. BoardRenderer to be set.");
         // initializeGame() will be called after BoardRenderer is set.
     }
 
     // Setter for BoardRenderer
     public void setBoardRenderer(BoardRenderer boardRenderer) {
         this.boardRenderer = boardRenderer;
-        System.out.println("BoardRenderer set in ChessGame.");
         // Now that BoardRenderer is set, we can initialize the game (which renders the board)
         initializeGame(); 
         // Initial status update after board is rendered
@@ -56,15 +53,10 @@ public class ChessGame {
 
 
     private void initializeGame() {
-        System.out.println("Initializing chess board state via ChessBoard.initialize()...");
-        chessBoard.initialize(); 
-        System.out.println("Chess board state initialized.");
+        chessBoard.initialize();
         if (boardRenderer != null) {
-            System.out.println("Requesting BoardRenderer to render the board...");
             boardRenderer.renderBoard();
-            System.out.println("Initial board rendered.");
         } else {
-            System.out.println("BoardRenderer not set yet in initializeGame.");
         }
     }
     
@@ -100,7 +92,6 @@ public class ChessGame {
 
     private boolean hasAnyLegalMoves(boolean forPlayerIsWhite) {
         if (chessBoard.getBoardArray() == null) {
-            System.out.println("Error in hasAnyLegalMoves: Board array is null.");
             return false;
         }
 
@@ -137,31 +128,29 @@ public class ChessGame {
         if (!currentPlayerHasLegalMoves) {
             if (kingCurrentlyInCheck) {
                 gameStatus.setCurrentStatus(GameStatus.Status.CHECKMATE);
-                System.out.println("CHECKMATE! " + (isWhiteTurn ? "Black" : "White") + " wins."); // Winner is opposite of current turn
                 isGameOver = true;
             } else {
                 gameStatus.setCurrentStatus(GameStatus.Status.STALEMATE);
-                System.out.println("STALEMATE! The game is a draw.");
                 isGameOver = true;
             }
         } else if (kingCurrentlyInCheck) {
-            System.out.println((isWhiteTurn ? "White" : "Black") + " is in CHECK!");
+            gameStatus.setCurrentStatus(GameStatus.Status.CHECK);
+        } else {
+            gameStatus.setCurrentStatus(GameStatus.Status.ONGOING);
         }
     }
 
 
     public void makeMove(String move) {
         if (isGameOver) {
-            System.out.println("Game is over. No more moves allowed. Status: " + gameStatus.getCurrentStatus());
-            updateGUIAfterMove(); // Ensure UI reflects final status
+            updateGUIAfterMove();
             return;
         }
 
-        System.out.println("Attempting to make move: " + move + " (" + (isWhiteTurn ? "White" : "Black") + "'s turn)");
+
         
         if (move == null || move.length() != 4) {
-            System.out.println("Invalid move format. Please use 'e2e4'.");
-            updateGUIAfterMove(); 
+            updateGUIAfterMove();
             return;
         }
         String fromAlg = move.substring(0, 2);
@@ -172,7 +161,6 @@ public class ChessGame {
             fromCoords = Utils.fromAlgebraicNotation(fromAlg);
             toCoords = Utils.fromAlgebraicNotation(toAlg);
         } catch (IllegalArgumentException e) {
-            System.out.println("Invalid algebraic notation in move: " + move + ". Error: " + e.getMessage());
             updateGUIAfterMove();
             return;
         }
@@ -181,18 +169,15 @@ public class ChessGame {
         int toRow = toCoords[0];
         int toCol = toCoords[1];
         if (!Utils.isWithinBounds(fromRow, fromCol) || !Utils.isWithinBounds(toRow, toCol)) {
-            System.out.println("Move coordinates are out of bounds.");
             updateGUIAfterMove();
             return;
         }
         Piece pieceToMove = chessBoard.getPiece(fromRow, fromCol);
         if (pieceToMove == null) {
-            System.out.println("No piece at source square: " + fromAlg);
             updateGUIAfterMove();
             return;
         }
         if ((pieceToMove.isWhite() && !isWhiteTurn) || (!pieceToMove.isWhite() && isWhiteTurn)) {
-            System.out.println("Error: It's not " + (pieceToMove.isWhite() ? "Black's" : "White's") + " turn.");
             updateGUIAfterMove();
             return;
         }
@@ -210,14 +195,13 @@ public class ChessGame {
             chessBoard.setPiece(fromRow, fromCol, pieceToMove);
             chessBoard.setPiece(toRow, toCol, originalDestinationPiece);
             if (selfCheck) {
-                System.out.println("Invalid move: " + move + " leaves your King in check.");
-                updateGUIAfterMove(); 
+                updateGUIAfterMove();
                 return;
             }
             Piece capturedPieceActual = chessBoard.getPiece(toRow, toCol); 
             chessBoard.movePiece(fromRow, fromCol, toRow, toCol); 
             if (capturedPieceActual != null && capturedPieceActual.isWhite() != pieceToMove.isWhite()) {
-                 System.out.println("Captured " + capturedPieceActual.getClass().getSimpleName() + " at " + toAlg);
+                 // captured piece notification
             }
             moveHistory.addMove(move);
             if (pieceToMove instanceof King ) { 
@@ -235,26 +219,22 @@ public class ChessGame {
                 boolean blackPromotes = !movedPiece.isWhite() && toRow == 7;
                 if (whitePromotes || blackPromotes) {
                     chessBoard.setPiece(toRow, toCol, new Queen(movedPiece.isWhite()));
-                    System.out.println("Pawn promoted to Queen at " + toAlg + "!");
                 }
             }
             
             isWhiteTurn = !isWhiteTurn; 
-            System.out.println("Move successful. It is now " + (isWhiteTurn ? "White's" : "Black's") + " turn.");
-            updateGameStatusAndCheckEndConditions(); // Check for check/checkmate/stalemate AFTER turn switch
+            updateGameStatusAndCheckEndConditions();
         } else {
-            System.out.println("Invalid move for " + pieceToMove.getClass().getSimpleName() + " from " + fromAlg + " to " + toAlg + " according to its isValidMove method.");
+            // invalid move
         }
         updateGUIAfterMove(); // Central place to update UI after any move attempt outcome
     }
 
     public void printGameStatus() {
-        System.out.println("Current game status: " + gameStatus.getCurrentStatus() + ". Turn: " + (isWhiteTurn ? "White" : "Black"));
-        chessBoard.printBoard(); 
+        chessBoard.printBoard();
     }
 
     public void printMoveHistory() {
-        System.out.println("Printing move history:");
         moveHistory.printHistory();
     }
 

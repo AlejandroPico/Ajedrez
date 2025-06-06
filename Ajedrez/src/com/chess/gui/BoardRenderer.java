@@ -32,7 +32,6 @@ public class BoardRenderer {
     private final Border DEFAULT_BORDER = BorderFactory.createLineBorder(Color.GRAY);
 
     public BoardRenderer(JPanel boardPanel, ChessGame chessGame) { // Changed constructor
-        System.out.println("Initializing BoardRenderer with ChessGame reference.");
         this.boardPanel = boardPanel;
         this.chessGame = chessGame;
         this.chessBoard = chessGame.getChessBoard(); // Get ChessBoard from ChessGame
@@ -42,7 +41,6 @@ public class BoardRenderer {
     }
 
     private void initializeBoardGUI() {
-        System.out.println("Initializing Board GUI (squares, colors, and listeners)");
         boardPanel.removeAll();
 
         for (int row = 0; row < 8; row++) {
@@ -83,7 +81,6 @@ public class BoardRenderer {
 
     private void handleSquareClick(int row, int col) {
         if (chessGame.isGameOver()) {
-            System.out.println("Game is over. No clicks handled.");
             return;
         }
 

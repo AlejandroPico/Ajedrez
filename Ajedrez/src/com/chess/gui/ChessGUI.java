@@ -21,7 +21,6 @@ public class ChessGUI {
     private BoardRenderer boardRenderer; 
 
     public ChessGUI() {
-        System.out.println("Initializing ChessGUI components...");
         frame = new JFrame("Chess Game");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setSize(700, 750); 
@@ -52,7 +51,6 @@ public class ChessGUI {
         // This call to setBoardRenderer will trigger initializeGame() inside ChessGame,
         // which then calls boardRenderer.renderBoard() and chessGUI.updateStatusMessage().
 
-        System.out.println("ChessGUI initialization complete. Frame visible.");
         frame.setVisible(true);
         // updateStatusMessage(); // Initial status update is now handled by ChessGame after setBoardRenderer
     }
@@ -63,7 +61,6 @@ public class ChessGUI {
 
     public void updateStatusMessage() {
         if (chessGame == null || statusLabel == null) {
-            System.out.println("Cannot update status: chessGame or statusLabel is null.");
             return;
         }
 
@@ -91,7 +88,6 @@ public class ChessGUI {
         }
         
         statusLabel.setText(finalMessage);
-        System.out.println("GUI Status Updated: " + finalMessage);
     }
 
     private boolean showSideSelectionDialog() {

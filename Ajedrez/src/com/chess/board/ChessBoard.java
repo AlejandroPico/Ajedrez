@@ -18,8 +18,7 @@ public class ChessBoard {
         private int[] enPassantTargetSquare;
 
 	public void initialize() {
-		System.out.println("Initializing the chess board...");
-		board = new Piece[8][8];
+                board = new Piece[8][8];
 
 		// Initialize black pieces
 		board[0][0] = new Rook(false);
@@ -46,31 +45,27 @@ public class ChessBoard {
 		for (int i = 0; i < 8; i++) {
 			board[6][i] = new Pawn(true);
 		}
-		System.out.println("Chess board initialized.");
-	}
+        }
 
 	public void printBoard() {
-		System.out.println("Printing the current state of the board:");
-		for (int i = 0; i < 8; i++) {
-			for (int j = 0; j < 8; j++) {
-				if (board[i][j] == null) {
-					System.out.print(". ");
-				} else {
-					System.out.print(board[i][j].getSymbol() + " ");
-				}
-			}
-			System.out.println();
-		}
-	}
+                for (int i = 0; i < 8; i++) {
+                        for (int j = 0; j < 8; j++) {
+                                if (board[i][j] == null) {
+                                        System.out.print(". ");
+                                } else {
+                                        System.out.print(board[i][j].getSymbol() + " ");
+                                }
+                        }
+                        System.out.println();
+                }
+        }
 
 	public boolean makeMove(String move) {
-		System.out.println("Attempting to make move: " + move);
-		// Basic move parsing (e.g., "e2 e4")
-		String[] parts = move.split(" ");
-		if (parts.length != 2) {
-			System.out.println("Invalid input format. Please use the format 'e2 e4'.");
-			return false;
-		}
+                // Basic move parsing (e.g., "e2 e4")
+                String[] parts = move.split(" ");
+                if (parts.length != 2) {
+                        return false;
+                }
 
 		int fromRow = 8 - Character.getNumericValue(parts[0].charAt(1));
 		int fromCol = parts[0].charAt(0) - 'a';
@@ -80,30 +75,25 @@ public class ChessBoard {
 		// Check if the move is within bounds
 		if (fromRow < 0 || fromRow >= 8 || fromCol < 0 || fromCol >= 8 || toRow < 0 || toRow >= 8 || toCol < 0
 				|| toCol >= 8) {
-			System.out.println("Move out of bounds. Please try again.");
-			return false;
-		}
+                        return false;
+                }
 
 		// Check if there is a piece to move
 		Piece piece = board[fromRow][fromCol];
 		if (piece == null) {
-			System.out.println("No piece at the source location. Please try again.");
-			return false;
-		}
+                        return false;
+                }
 
 		// Validate the move
 		if (!piece.isValidMove(fromRow, fromCol, toRow, toCol, board)) {
-			System.out.println("Invalid move for the selected piece. Please try again.");
-			return false;
-		}
+                        return false;
+                }
 
 		// Move the piece
-		System.out.println("Moving piece from " + parts[0] + " to " + parts[1]);
-		board[toRow][toCol] = piece;
-		board[fromRow][fromCol] = null;
-		System.out.println("Move completed.");
-		return true;
-	}
+                board[toRow][toCol] = piece;
+                board[fromRow][fromCol] = null;
+                return true;
+        }
 
 	public Piece getPiece(int row, int col) {
 		if (row < 0 || row >= 8 || col < 0 || col >= 8) {
@@ -114,18 +104,14 @@ public class ChessBoard {
 
 	public void setPiece(int row, int col, Piece piece) {
 		if (row < 0 || row >= 8 || col < 0 || col >= 8) {
-			// Handle error, maybe throw an exception
-			System.out.println("Error: Attempted to set piece out of bounds.");
-			return;
+                        return;
 		}
 		board[row][col] = piece;
 	}
 
 	public void removePiece(int row, int col) {
 		if (row < 0 || row >= 8 || col < 0 || col >= 8) {
-			// Handle error
-			System.out.println("Error: Attempted to remove piece out of bounds.");
-			return;
+                        return;
 		}
 		board[row][col] = null;
 	}
@@ -133,23 +119,19 @@ public class ChessBoard {
 	public void movePiece(int fromRow, int fromCol, int toRow, int toCol) {
 		if (fromRow < 0 || fromRow >= 8 || fromCol < 0 || fromCol >= 8 || toRow < 0 || toRow >= 8 || toCol < 0
 				|| toCol >= 8) {
-			System.out.println("Error: Move coordinates out of bounds.");
-			return;
+                        return;
 		}
 		Piece pieceToMove = board[fromRow][fromCol];
 		if (pieceToMove == null) {
-			System.out.println("Error: No piece at the source square for movePiece.");
-			return;
+                        return;
 		}
 		// Handle capture: if there's a piece at the destination, it's captured (removed)
-		if (board[toRow][toCol] != null) {
-			System.out.println("Piece captured at " + (char) ('a' + toCol) + (8 - toRow));
-		}
-		board[toRow][toCol] = pieceToMove;
-		board[fromRow][fromCol] = null;
-		System.out.println(
-				"Piece moved from " + (char) ('a' + fromCol) + (8 - fromRow) + " to " + (char) ('a' + toCol) + (8 - toRow));
-	}
+                if (board[toRow][toCol] != null) {
+                        // capture
+                }
+                board[toRow][toCol] = pieceToMove;
+                board[fromRow][fromCol] = null;
+        }
 
         public Piece[][] getBoardArray() {
                 return board;

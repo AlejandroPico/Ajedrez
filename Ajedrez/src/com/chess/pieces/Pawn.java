@@ -3,8 +3,6 @@ package com.chess.pieces;
 public class Pawn extends Piece {
     public Pawn(boolean isWhite) {
         super(isWhite);
-        // Log message indicating the creation of a Pawn piece with its color
-        System.out.println("Creating " + (isWhite ? "white" : "black") + " Pawn");
     }
 
     /**
@@ -17,9 +15,6 @@ public class Pawn extends Piece {
 
         @Override
         public boolean isValidMove(int fromRow, int fromCol, int toRow, int toCol, Piece[][] board) {
-                // Log the initial move being validated
-                System.out.println(
-                                "Validating move for Pawn from (" + fromRow + ", " + fromCol + ") to (" + toRow + ", " + toCol + ")");
 
                 // Ensure coordinates are within the board boundaries before accessing the board
                 if (fromRow < 0 || fromRow >= 8 || fromCol < 0 || fromCol >= 8 ||
@@ -31,14 +26,12 @@ public class Pawn extends Piece {
 		// Normal move forward
 		if (fromCol == toCol) {
 			if (board[toRow][toCol] == null) {
-				if (toRow == fromRow + direction) {
-					System.out.println("Valid move: Normal move forward");
+				if (toRow == fromRow + direction) {
 					return true;
 				}
 				// Initial double move
 				if ((isWhite && fromRow == 6) || (!isWhite && fromRow == 1)) {
 					if (toRow == fromRow + 2 * direction && board[fromRow + direction][fromCol] == null) {
-						System.out.println("Valid move: Initial double move");
 						return true;
 					}
 				}
@@ -46,11 +39,11 @@ public class Pawn extends Piece {
 		} else if (Math.abs(toCol - fromCol) == 1 && toRow == fromRow + direction) {
 			// Capturing an opponent's piece diagonally
 			if (board[toRow][toCol] != null && board[toRow][toCol].isWhite() != isWhite) {
-				System.out.println("Valid move: Capturing an opponent's piece");
+				
 				return true;
 			}
 		}
-		System.out.println("Invalid move for Pawn");
+		
 		return false;
 	}
 
